@@ -195,7 +195,7 @@ class LockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 14,
+      width: 28, // было 14, увеличили толщину в 2 раза
       height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
@@ -203,7 +203,7 @@ class LockWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         border: Border.all(color: Colors.black, width: 1),
         boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(1, 2)),
+          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(1, 2))
         ],
       ),
       child: const Center(
@@ -211,7 +211,11 @@ class LockWidget extends StatelessWidget {
           quarterTurns: 1,
           child: Text(
             '2.5',
-            style: TextStyle(fontSize: 7, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 9, // как у дисков
+              fontWeight: FontWeight.bold, // как у дисков
+              color: Colors.white, // для контраста на графитовом фоне
+            ),
           ),
         ),
       ),
