@@ -516,25 +516,28 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
 }
 
 class _BarbellVisual extends StatelessWidget {
-  final List<double> discs;
+  final List<double> discs; // диски одной стороны (от центра к краю)
 
   const _BarbellVisual({required this.discs});
 
   @override
   Widget build(BuildContext context) {
-    final leftDiscs = discs.reversed.toList();
-    final rightDiscs = List<double>.from(discs);
+    // Для отображения "половины" слева направо:
+    // снаружи -> к центру, поэтому разворачиваем список.
+    final oneSideDiscs = discs.reversed.toList();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const _BarbellHandle(side: 'left'),
+        // Диски только с одной стороны
+        ...oneSideDiscs.map((d) => DiscWidget(weight: d)),
+
+        // Замок возле центра
         const LockWidget(),
-        ...leftDiscs.map((d) => DiscWidget(weight: d)),
+
+        // Центральная часть грифа + правая рукоятка
         const BarbellBar(),
-        ...rightDiscs.map((d) => DiscWidget(weight: d)),
-        const LockWidget(),
         const _BarbellHandle(side: 'right'),
       ],
     );
