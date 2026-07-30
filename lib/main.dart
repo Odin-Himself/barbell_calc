@@ -129,15 +129,15 @@ Color discColor(double weight) {
 
 // Размеры дисков
 double discHeight(double weight) {
-  if (weight == 25) return 200.0;
-  if (weight == 20) return 185.0;
-  if (weight == 15) return 165.0;
-  if (weight == 10) return 145.0;
-  if (weight == 5) return 120.0;
-  if (weight == 2.5) return 100.0;
-  if (weight == 1.25) return 85.0;
-  if (weight == 1) return 70.0;
-  if (weight == 0.5) return 55.0;
+  if (weight == 25) return 300.0;
+  if (weight == 20) return 300.0;
+  if (weight == 15) return 270.0;
+  if (weight == 10) return 220.0;
+  if (weight == 5) return 160.0;
+  if (weight == 2.5) return 140.0;
+  if (weight == 1.25) return 100.0;
+  if (weight == 1) return 100.0;
+  if (weight == 0.5) return 80.0;
   return 80.0;
 }
 
