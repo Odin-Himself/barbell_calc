@@ -150,7 +150,8 @@ double discWidth(double weight) {
 
 class DiscWidget extends StatelessWidget {
   final double weight;
-  const DiscWidget({super.key, required this.weight});
+  final int? topIndex; // номер сверху (только если нужен)
+  const DiscWidget({super.key, required this.weight, this.topIndex});
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +175,25 @@ class DiscWidget extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          // Номер сверху (например 1,2,3 для красных 25 кг)
+          if (topIndex != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 5, // на 5 px ниже верхней кромки
+              child: Center(
+                child: Text(
+                  '$topIndex',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+
+          // Вес по центру
           Center(
             child: Text(
               label,
@@ -184,6 +204,8 @@ class DiscWidget extends StatelessWidget {
               ),
             ),
           ),
+
+          // KG снизу
           Positioned(
             left: 0,
             right: 0,
@@ -558,17 +580,28 @@ class _BarbellVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Порядок: гриф -> тяжелые ... легкие -> замок
     final oneSideDiscs = List<double>.from(discs);
+
+    final int redCount = oneSideDiscs.where((d) => d == 25).length;
+    int redIndex = 0;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const BarbellBar(),
-        ...oneSideDiscs.map((d) => DiscWidget(weight: d)),
+
+        ...oneSideDiscs.map((d) {
+          int? idx;
+          if (d == 25 && redCount > 1) {
+            redIndex += 1;
+            idx = redIndex;
+          }
+          return DiscWidget(weight: d, topIndex: idx);
+        }),
+
         const LockWidget(),
-        const _BarbellSleeve(), // втулка справа от замка
+        const _BarbellSleeve(),
       ],
     );
   }
