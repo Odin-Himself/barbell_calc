@@ -173,15 +173,12 @@ class DiscWidget extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: RotatedBox(
-          quarterTurns: 1,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
       ),
@@ -207,15 +204,12 @@ class LockWidget extends StatelessWidget {
         ],
       ),
       child: const Center(
-        child: RotatedBox(
-          quarterTurns: 1,
-          child: Text(
-            '2.5',
-            style: TextStyle(
-              fontSize: 9, // как у дисков
-              fontWeight: FontWeight.bold, // как у дисков
-              color: Colors.white, // для контраста на графитовом фоне
-            ),
+        child: Text(
+          '2.5',
+          style: TextStyle(
+          fontSize: 9, // как у дисков
+          fontWeight: FontWeight.bold, // как у дисков
+          color: Colors.white, // как у дисков
           ),
         ),
       ),
