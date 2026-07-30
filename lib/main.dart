@@ -172,15 +172,34 @@ class DiscWidget extends StatelessWidget {
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(1, 2)),
         ],
       ),
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black87,
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 5,
+            child: Center(
+              child: Text(
+                'KG',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -192,7 +211,7 @@ class LockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28, // было 14, увеличили толщину в 2 раза
+      width: 28,
       height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
@@ -200,18 +219,37 @@ class LockWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         border: Border.all(color: Colors.black, width: 1),
         boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(1, 2))
+          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(1, 2)),
         ],
       ),
-      child: const Center(
-        child: Text(
-          '2.5',
-          style: TextStyle(
-          fontSize: 9, // как у дисков
-          fontWeight: FontWeight.bold, // как у дисков
-          color: Colors.white, // как у дисков
+      child: const Stack(
+        children: [
+          Center(
+            child: Text(
+              '2.5',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 5,
+            child: Center(
+              child: Text(
+                'KG',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
