@@ -213,7 +213,7 @@ class LockWidget extends StatelessWidget {
     return Container(
       width: 28,
       height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+      margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         color: const Color(0xFF424242),
         borderRadius: BorderRadius.circular(3),
@@ -558,21 +558,17 @@ class _BarbellVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Нужный порядок: от грифа к краю = тяжелые -> легкие
+    // Порядок: гриф -> тяжелые ... легкие -> замок
     final oneSideDiscs = List<double>.from(discs);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Гриф слева
         const BarbellBar(),
-
-        // Диски: от тяжелого к легкому
         ...oneSideDiscs.map((d) => DiscWidget(weight: d)),
-
-        // Замок справа (снаружи)
         const LockWidget(),
+        const _BarbellSleeve(), // втулка справа от замка
       ],
     );
   }
@@ -597,6 +593,30 @@ class _BarbellHandle extends StatelessWidget {
           left: side == 'left' ? const Radius.circular(8) : Radius.zero,
           right: side == 'right' ? const Radius.circular(8) : Radius.zero,
         ),
+      ),
+    );
+  }
+}
+
+class _BarbellSleeve extends StatelessWidget {
+  const _BarbellSleeve();
+
+  @override
+  Widget build(BuildContext context) {
+    // Если "диаметр" грифа у нас условно 16, то втулка:
+    // 16 * (50 / 28) ~= 28.6 -> округляем до 29
+    return Container(
+      width: 70,  // концевая часть втулки
+      height: 42, // толще грифа в полтора раза 
+      margin: const EdgeInsets.symmetric(horizontal: 1),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFB0BEC5), Color(0xFF546E7A), Color(0xFFB0BEC5)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black45, width: 1),
       ),
     );
   }
