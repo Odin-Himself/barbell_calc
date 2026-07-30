@@ -558,22 +558,21 @@ class _BarbellVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Снаружи -> к центру
-    final oneSideDiscs = discs.reversed.toList();
+    // Нужный порядок: от грифа к краю = тяжелые -> легкие
+    final oneSideDiscs = List<double>.from(discs);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Замок теперь левее всех дисков
-        const LockWidget(),
+        // Гриф слева
+        const BarbellBar(),
 
-        // Диски одной стороны
+        // Диски: от тяжелого к легкому
         ...oneSideDiscs.map((d) => DiscWidget(weight: d)),
 
-        // Центр штанги
-        const BarbellBar(),
-        const _BarbellHandle(side: 'right'),
+        // Замок справа (снаружи)
+        const LockWidget(),
       ],
     );
   }
