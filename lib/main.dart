@@ -518,8 +518,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFE94560),
                                 foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -603,23 +602,39 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           ),
                           Container(
                             width: double.infinity,
-                            color: const Color(0xFF0F3460),
+                            color: Colors.transparent,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Text(
-                                _result!.resultString,
-                                style: const TextStyle(
-                                  color: Color(0xFFFFD700),
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Проверочная строка',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Text(
+                                    _result!.resultString,
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 12,
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           _DiscLegend(discs: _result!.discs),
