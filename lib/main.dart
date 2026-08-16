@@ -551,7 +551,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                 _result!.resultString,
                                 style: const TextStyle(
                                   color: Color(0xFFFFD700),
-                                  fontSize: 16,
+                                  fontSize: 12,
                                   fontFamily: 'monospace',
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 0.5,
@@ -590,6 +590,7 @@ class _BarbellVisual extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const BarbellBar(),
+        const _BarbellBobyshka(), // новый элемент между грифом и дисками
 
         ...oneSideDiscs.map((d) {
           int? idx;
@@ -649,6 +650,28 @@ class _BarbellSleeve extends StatelessWidget {
           end: Alignment.bottomCenter,
         ),
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black45, width: 1),
+      ),
+    );
+  }
+}
+
+class _BarbellBobyshka extends StatelessWidget {
+  const _BarbellBobyshka();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18, // уже замка (у замка сейчас 28)
+      height: 40, // выше грифа/втулки, но ниже замка
+      margin: const EdgeInsets.symmetric(horizontal: 1),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFB0BEC5), Color(0xFF546E7A), Color(0xFFB0BEC5)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Colors.black45, width: 1),
       ),
     );
