@@ -233,8 +233,8 @@ class LockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
-      height: 60,
+      width: 30,
+      height: 65,
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         color: const Color(0xFF424242),
