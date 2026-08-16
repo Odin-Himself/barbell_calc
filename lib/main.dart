@@ -584,19 +584,32 @@ class _BarbellVisual extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const BarbellBar(),
-        const _BarbellBobyshka(), // новый элемент между грифом и дисками
+        const _BarbellBobyshka(),
 
-        ...oneSideDiscs.map((d) {
-          int? idx;
-          if (d == 25 && redCount > 1) {
-            redIndex += 1;
-            idx = redIndex;
-          }
-          return DiscWidget(weight: d, topIndex: idx);
-        }),
-
-        const LockWidget(),
-        const _BarbellSleeve(),
+        // Нижний слой: втулка.
+        // Верхний слой: диски + замок, начиная от той же точки.
+        Stack(
+          alignment: Alignment.centerLeft,
+          clipBehavior: Clip.none,
+          children: [
+            const _BarbellSleeve(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ...oneSideDiscs.map((d) {
+                  int? idx;
+                  if (d == 25 && redCount > 1) {
+                    redIndex += 1;
+                    idx = redIndex;
+                  }
+                  return DiscWidget(weight: d, topIndex: idx);
+                }),
+                const LockWidget(),
+              ],
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -634,8 +647,8 @@ class _BarbellSleeve extends StatelessWidget {
     // Если "диаметр" грифа у нас условно 16, то втулка:
     // 16 * (50 / 28) ~= 28.6 -> округляем до 29
     return Container(
-      width: 70,  // концевая часть втулки
-      height: 42, // толще грифа в полтора раза 
+      width: 300,  // концевая часть втулки
+      height: 50, // толщина втулки
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -657,7 +670,7 @@ class _BarbellBobyshka extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 24, // уже замка (у замка сейчас 28)
-      height: 50, // выше грифа/втулки, но ниже замка
+      height: 76, // выше грифа/втулки, но ниже замка
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
