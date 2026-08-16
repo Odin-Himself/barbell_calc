@@ -232,9 +232,22 @@ class LockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double handleCoreWidth = 22; // меняете только длину ручки
+    const double handleShiftX = 4; // общий сдвиг ручки вправо/влево
+
+    const double lockWidth = 28;
+    const double lockHeight = 60;
+
+    const double capWidth = 6;
+    const double capHeight = 5;
+    const double handleHeight = 5;
+
+    final double handleGroupWidth = capWidth + handleCoreWidth + capWidth;
+    final double handleLeft = (lockWidth - handleGroupWidth) / 2 + handleShiftX;
+
     return Container(
-      width: 28,
-      height: 60, // высота только корпуса замка
+      width: lockWidth,
+      height: lockHeight,
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         color: const Color(0xFF424242),
@@ -245,9 +258,8 @@ class LockWidget extends StatelessWidget {
         ],
       ),
       child: Stack(
-        clipBehavior: Clip.none, // элементы крутилки рисуются выше корпуса
+        clipBehavior: Clip.none,
         children: [
-          // Вес по центру
           const Center(
             child: Text(
               '2.5',
@@ -258,8 +270,6 @@ class LockWidget extends StatelessWidget {
               ),
             ),
           ),
-
-          // KG снизу
           const Positioned(
             left: 0,
             right: 0,
@@ -276,7 +286,43 @@ class LockWidget extends StatelessWidget {
             ),
           ),
 
-          // Вертикальный "пенек" — строго по центру
+          Positioned(
+            top: -12,
+            left: handleLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: capWidth,
+                  height: capHeight,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBDBDBD),
+                    borderRadius: BorderRadius.circular(1.5),
+                    border: Border.all(color: Colors.black38, width: 0.7),
+                  ),
+                ),
+                Container(
+                  width: handleCoreWidth,
+                  height: handleHeight,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF9E9E9E),
+                    borderRadius: BorderRadius.circular(2),
+                    border: Border.all(color: Colors.black45, width: 0.8),
+                  ),
+                ),
+                Container(
+                  width: capWidth,
+                  height: capHeight,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBDBDBD),
+                    borderRadius: BorderRadius.circular(1.5),
+                    border: Border.all(color: Colors.black38, width: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           Positioned(
             top: -14,
             left: 0,
@@ -289,66 +335,6 @@ class LockWidget extends StatelessWidget {
                   color: const Color(0xFF9E9E9E),
                   borderRadius: BorderRadius.circular(2),
                   border: Border.all(color: Colors.black45, width: 0.8),
-                ),
-              ),
-            ),
-          ),
-
-          // Горизонтальная ручка — строго по центру
-          Positioned(
-            top: -18,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                width: 34,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF9E9E9E),
-                  borderRadius: BorderRadius.circular(2),
-                  border: Border.all(color: Colors.black45, width: 0.8),
-                ),
-              ),
-            ),
-          ),
-
-          // Левый наконечник ручки
-          Positioned(
-            top: -18,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Transform.translate(
-                offset: const Offset(-14, 0),
-                child: Container(
-                  width: 6,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFBDBDBD),
-                    borderRadius: BorderRadius.circular(1.5),
-                    border: Border.all(color: Colors.black38, width: 0.7),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Правый наконечник ручки
-          Positioned(
-            top: -18,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Transform.translate(
-                offset: const Offset(14, 0),
-                child: Container(
-                  width: 6,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFBDBDBD),
-                    borderRadius: BorderRadius.circular(1.5),
-                    border: Border.all(color: Colors.black38, width: 0.7),
-                  ),
                 ),
               ),
             ),
