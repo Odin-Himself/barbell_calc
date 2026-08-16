@@ -433,7 +433,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF16213E),
         title: const Text(
