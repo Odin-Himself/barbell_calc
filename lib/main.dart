@@ -233,8 +233,8 @@ class LockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 65,
+      width: 28,
+      height: 60, // высота только корпуса замка
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         color: const Color(0xFF424242),
@@ -244,9 +244,11 @@ class LockWidget extends StatelessWidget {
           BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(1, 2)),
         ],
       ),
-      child: const Stack(
+      child: Stack(
+        clipBehavior: Clip.none, // элементы крутилки рисуются выше корпуса
         children: [
-          Center(
+          // Вес по центру
+          const Center(
             child: Text(
               '2.5',
               style: TextStyle(
@@ -256,7 +258,9 @@ class LockWidget extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
+
+          // KG снизу
+          const Positioned(
             left: 0,
             right: 0,
             bottom: 5,
@@ -267,6 +271,84 @@ class LockWidget extends StatelessWidget {
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          // Вертикальный "пенек" — строго по центру
+          Positioned(
+            top: -14,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 7,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF9E9E9E),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.black45, width: 0.8),
+                ),
+              ),
+            ),
+          ),
+
+          // Горизонтальная ручка — строго по центру
+          Positioned(
+            top: -18,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 34,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF9E9E9E),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.black45, width: 0.8),
+                ),
+              ),
+            ),
+          ),
+
+          // Левый наконечник ручки
+          Positioned(
+            top: -18,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Transform.translate(
+                offset: const Offset(-14, 0),
+                child: Container(
+                  width: 6,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBDBDBD),
+                    borderRadius: BorderRadius.circular(1.5),
+                    border: Border.all(color: Colors.black38, width: 0.7),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Правый наконечник ручки
+          Positioned(
+            top: -18,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Transform.translate(
+                offset: const Offset(14, 0),
+                child: Container(
+                  width: 6,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBDBDBD),
+                    borderRadius: BorderRadius.circular(1.5),
+                    border: Border.all(color: Colors.black38, width: 0.7),
+                  ),
                 ),
               ),
             ),
