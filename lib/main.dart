@@ -282,33 +282,27 @@ class BarbellBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(height: 4),
-        Container(
-          width: 80,
-          height: 28,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFB0BEC5), Color(0xFF546E7A), Color(0xFFB0BEC5)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: const Center(
-            child: Text(
-              '20 кг',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+    return Container(
+      width: 80,
+      height: 28,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFB0BEC5), Color(0xFF546E7A), Color(0xFFB0BEC5)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        // Убрали borderRadius: углы теперь прямые
+      ),
+      child: const Center(
+        child: Text(
+          '20 кг',
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
-      ],
+      ),
     );
   }
 }
