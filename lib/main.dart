@@ -652,19 +652,19 @@ class _BarbellVisual extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Гриф (нижний слой) + бобышка (верхний слой) с небольшим нахлестом.
+        // Гриф (нижний слой) + бобышка (верхний слой) с нахлестом.
         SizedBox(
-          width: 103, // 80 (гриф) + 24 (бобышка) - 1 (нахлест)
-          height: 76, // высота бобышки
+          width: 103, // 80 + 24 - 1
+          height: 76,
           child: Stack(
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.none,
-            children: [
-              const Positioned(
+            children: const [
+              Positioned(
                 left: 0,
                 child: BarbellBar(),
               ),
-              const Positioned(
+              Positioned(
                 left: 79, // заход бобышки на гриф на 1 px
                 child: _BarbellBobyshka(),
               ),
@@ -672,13 +672,16 @@ class _BarbellVisual extends StatelessWidget {
           ),
         ),
 
-        // Нижний слой: втулка.
+        // Нижний слой: втулка (сдвинута влево под бобышку).
         // Верхний слой: диски + замок.
         Stack(
           alignment: Alignment.centerLeft,
           clipBehavior: Clip.none,
           children: [
-            const _BarbellSleeve(),
+            Transform.translate(
+              offset: const Offset(-1, 0), // втулка уходит под бобышку на 1 px
+              child: const _BarbellSleeve(),
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -730,11 +733,9 @@ class _BarbellSleeve extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Если "диаметр" грифа у нас условно 16, то втулка:
-    // 16 * (50 / 28) ~= 28.6 -> округляем до 29
     return Container(
-      width: 300,  // концевая часть втулки
-      height: 50, // толщина втулки
+      width: 300,
+      height: 50,
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -742,7 +743,10 @@ class _BarbellSleeve extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: const BorderRadius.horizontal(
+          left: Radius.zero,
+          right: Radius.circular(6),
+        ),
         border: Border.all(color: Colors.black45, width: 1),
       ),
     );
