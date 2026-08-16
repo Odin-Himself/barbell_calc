@@ -652,11 +652,28 @@ class _BarbellVisual extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const BarbellBar(),
-        const _BarbellBobyshka(),
+        // Гриф (нижний слой) + бобышка (верхний слой) с небольшим нахлестом.
+        SizedBox(
+          width: 103, // 80 (гриф) + 24 (бобышка) - 1 (нахлест)
+          height: 76, // высота бобышки
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            clipBehavior: Clip.none,
+            children: [
+              const Positioned(
+                left: 0,
+                child: BarbellBar(),
+              ),
+              const Positioned(
+                left: 79, // заход бобышки на гриф на 1 px
+                child: _BarbellBobyshka(),
+              ),
+            ],
+          ),
+        ),
 
         // Нижний слой: втулка.
-        // Верхний слой: диски + замок, начиная от той же точки.
+        // Верхний слой: диски + замок.
         Stack(
           alignment: Alignment.centerLeft,
           clipBehavior: Clip.none,
@@ -740,7 +757,7 @@ class _BarbellBobyshka extends StatelessWidget {
     return Container(
       width: 24, // уже замка (у замка сейчас 28)
       height: 76, // выше грифа/втулки, но ниже замка
-      margin: const EdgeInsets.symmetric(horizontal: 1),
+      margin: const EdgeInsets.only(right: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFB0BEC5), Color(0xFF546E7A), Color(0xFFB0BEC5)],
