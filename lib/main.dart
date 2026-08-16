@@ -360,6 +360,7 @@ class BarbellBar extends StatelessWidget {
           end: Alignment.bottomCenter,
         ),
         // Убрали borderRadius: углы теперь прямые
+        border: Border.all(color: Colors.black54, width: 1), // обводка как у дисков
       ),
       child: const Center(
         child: Text(
