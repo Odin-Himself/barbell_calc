@@ -656,8 +656,8 @@ class _BarbellBobyshka extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18, // уже замка (у замка сейчас 28)
-      height: 40, // выше грифа/втулки, но ниже замка
+      width: 24, // уже замка (у замка сейчас 28)
+      height: 50, // выше грифа/втулки, но ниже замка
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
