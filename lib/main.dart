@@ -451,49 +451,40 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Container(
-                      color: Colors.white, // 1) фон контейнера белый
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
+                      color: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'Введите вес на штанге (кг):',
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                          const Center(
+                            child: Text(
+                              'Введите вес на штанге, кг',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
-
-                          // 2) поле уже и по центру
                           Center(
                             child: SizedBox(
-                              width:
-                                  280, // примерно в 2 раза уже от maxWidth: 560
+                              width: 280,
                               child: TextField(
                                 controller: _controller,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                      signed: false,
-                                    ),
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                  signed: false,
+                                ),
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                    RegExp(r'[\d.,]'),
-                                  ),
+                                  FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
                                 ],
                                 style: const TextStyle(
                                   color: Colors.black87,
@@ -502,16 +493,29 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                 ),
                                 decoration: InputDecoration(
                                   filled: true,
-                                  fillColor: const Color(0xFFF3F4F6),
+                                  fillColor: const Color(0xFFF1F3F5),
                                   hintText: 'Например: 100',
                                   hintStyle: const TextStyle(
                                     color: Colors.black45,
                                     fontSize: 18,
                                   ),
-                                  // 3) форма "таблетка"
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(999),
                                     borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE53935),
+                                      width: 2, // Толщина обводки поля ввода
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE53935),
+                                      width: 2, // Толщина обводки поля ввода
+                                    ),
                                   ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 20,
@@ -520,29 +524,23 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                   suffixText: 'кг',
                                   suffixStyle: const TextStyle(
                                     color: Colors.black54,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                   ),
                                 ),
                                 onSubmitted: (_) => _calculate(),
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 12),
-
-                          // 2) кнопка уже и по центру
                           Center(
                             child: SizedBox(
                               width: 280,
                               child: ElevatedButton(
                                 onPressed: _calculate,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE94560),
+                                  backgroundColor: const Color(0xFFE53935),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  // 3) форма "таблетка"
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: const StadiumBorder(),
                                   elevation: 2,
                                 ),
@@ -556,7 +554,6 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               ),
                             ),
                           ),
-
                           if (_error != null) ...[
                             const SizedBox(height: 10),
                             Text(
@@ -581,14 +578,14 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               Icon(
                                 Icons.fitness_center,
                                 size: 80,
-                                color: Colors.white.withOpacity(0.15),
+                                color: Colors.black.withOpacity(0.15),
                               ),
                               const SizedBox(height: 20),
                               Text(
                                 'Введите вес и нажмите\n«РАССЧИТАТЬ»',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.black.withOpacity(0.3),
                                   fontSize: 18,
                                 ),
                               ),
@@ -615,10 +612,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                             height: 280,
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: Center(
                                 child: _BarbellVisual(discs: _result!.discs),
                               ),
@@ -627,10 +621,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           Container(
                             width: double.infinity,
                             color: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
