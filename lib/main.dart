@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -397,6 +399,40 @@ class BarbellApp extends StatelessWidget {
   }
 }
 
+class RecordRow {
+  String date;
+  String exercise;
+  String weight;
+  String reps;
+
+  RecordRow({
+    required this.date,
+    required this.exercise,
+    required this.weight,
+    required this.reps,
+  });
+
+  factory RecordRow.empty() {
+    return RecordRow(date: '', exercise: '', weight: '', reps: '');
+  }
+
+  Map<String, dynamic> toJson() => {
+        'date': date,
+        'exercise': exercise,
+        'weight': weight,
+        'reps': reps,
+      };
+
+  factory RecordRow.fromJson(Map<String, dynamic> json) {
+    return RecordRow(
+      date: (json['date'] ?? '').toString(),
+      exercise: (json['exercise'] ?? '').toString(),
+      weight: (json['weight'] ?? '').toString(),
+      reps: (json['reps'] ?? '').toString(),
+    );
+  }
+}
+
 class BarbellCalculatorPage extends StatefulWidget {
   const BarbellCalculatorPage({super.key});
 
@@ -410,6 +446,84 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   String? _error;
   bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
   int _activeTab = 0; // 0 = Расчет, 1 = Мои рекорды, 2 = Настройки
+
+// Добавить вот этот блок:
+  static const String _recordsStorageKey = 'my_records_v1';
+
+  final List<RecordRow> _records = [RecordRow.empty()];
+
+  final RecordRow _firstRowHint = RecordRow(
+    date: '16.08.2026',
+    exercise: 'Присед',
+    weight: '140',
+    reps: '5',
+  );
+
+  bool _recordsLoaded = false;
+  String? _recordsMessage;
+
+  @override
+void initState() {
+  super.initState();
+  _loadRecords();
+}
+
+Future<void> _loadRecords() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString(_recordsStorageKey);
+
+  if (raw == null || raw.isEmpty) {
+    setState(() {
+      _recordsLoaded = true;
+    });
+    return;
+  }
+
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is List) {
+      _records
+        ..clear()
+        ..addAll(decoded.map((e) => RecordRow.fromJson(Map<String, dynamic>.from(e))));
+      if (_records.isEmpty) {
+        _records.add(RecordRow.empty());
+      }
+    }
+  } catch (_) {
+    _records
+      ..clear()
+      ..add(RecordRow.empty());
+  }
+
+  setState(() {
+    _recordsLoaded = true;
+  });
+}
+
+Future<void> _saveRecords() async {
+  final prefs = await SharedPreferences.getInstance();
+  final payload = jsonEncode(_records.map((e) => e.toJson()).toList());
+  await prefs.setString(_recordsStorageKey, payload);
+
+  setState(() {
+    _recordsMessage = 'Данные сохранены';
+  });
+}
+
+void _addRecordRow() {
+  setState(() {
+    _records.add(RecordRow.empty());
+    _recordsMessage = null;
+  });
+}
+
+void _removeRecordRow() {
+  if (_records.length <= 1) return;
+  setState(() {
+    _records.removeLast();
+    _recordsMessage = null;
+  });
+}
 
   void _calculate() {
     final text = _controller.text.trim().replaceAll(',', '.');
@@ -787,13 +901,33 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   }
 
 Widget _buildRecordsTab() {
-  final rows = [
-    ['1', '16.08.2026', 'Присед', '140 кг', '5'],
-    ['2', '14.08.2026', 'Жим лежа', '100 кг', '6'],
-    ['3', '12.08.2026', 'Становая тяга', '180 кг', '3'],
-    ['4', '10.08.2026', 'Жим стоя', '65 кг', '8'],
-    ['5', '08.08.2026', 'Тяга в наклоне', '90 кг', '7'],
-  ];
+  if (!_recordsLoaded) {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget editableCell({
+    required String value,
+    required String hint,
+    required ValueChanged<String> onChanged,
+    TextInputType? keyboardType,
+  }) {
+    return SizedBox(
+      width: 150,
+      child: TextFormField(
+        initialValue: value,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: hint,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+    );
+  }
 
   return SingleChildScrollView(
     child: Center(
@@ -808,11 +942,7 @@ Widget _buildRecordsTab() {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(
-                    Icons.emoji_events,
-                    color: Color(0xFFFFB300),
-                    size: 30,
-                  ),
+                  Icon(Icons.emoji_events, color: Color(0xFFFFB300), size: 30),
                   SizedBox(width: 8),
                   Text(
                     'Мои рекорды',
@@ -826,6 +956,7 @@ Widget _buildRecordsTab() {
                 ],
               ),
               const SizedBox(height: 14),
+
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -844,11 +975,9 @@ Widget _buildRecordsTab() {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      headingRowColor: MaterialStateProperty.all(
-                        const Color(0xFFF5F7FA),
-                      ),
-                      dataRowMinHeight: 48,
-                      dataRowMaxHeight: 56,
+                      headingRowColor: MaterialStateProperty.all(const Color(0xFFF5F7FA)),
+                      dataRowMinHeight: 58,
+                      dataRowMaxHeight: 70,
                       headingTextStyle: const TextStyle(
                         color: Colors.black87,
                         fontWeight: FontWeight.bold,
@@ -859,23 +988,125 @@ Widget _buildRecordsTab() {
                         DataColumn(label: Text('Дата')),
                         DataColumn(label: Text('Упражнение')),
                         DataColumn(label: Text('Вес на штанге')),
-                        DataColumn(label: Text('Количество повторений')),
+                        DataColumn(label: Text('Повторения')),
                       ],
-                      rows: rows.map((r) {
+                      rows: List.generate(_records.length, (index) {
+                        final row = _records[index];
+                        final isFirst = index == 0;
+
                         return DataRow(
                           cells: [
-                            DataCell(Text(r[0])),
-                            DataCell(Text(r[1])),
-                            DataCell(Text(r[2])),
-                            DataCell(Text(r[3])),
-                            DataCell(Text(r[4])),
+                            DataCell(Text('${index + 1}')),
+                            DataCell(
+                              editableCell(
+                                value: row.date,
+                                hint: isFirst ? _firstRowHint.date : '',
+                                onChanged: (v) => row.date = v,
+                              ),
+                            ),
+                            DataCell(
+                              editableCell(
+                                value: row.exercise,
+                                hint: isFirst ? _firstRowHint.exercise : '',
+                                onChanged: (v) => row.exercise = v,
+                              ),
+                            ),
+                            DataCell(
+                              editableCell(
+                                value: row.weight,
+                                hint: isFirst ? _firstRowHint.weight : '',
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                onChanged: (v) => row.weight = v,
+                              ),
+                            ),
+                            DataCell(
+                              editableCell(
+                                value: row.reps,
+                                hint: isFirst ? _firstRowHint.reps : '',
+                                keyboardType: TextInputType.number,
+                                onChanged: (v) => row.reps = v,
+                              ),
+                            ),
                           ],
                         );
-                      }).toList(),
+                      }),
                     ),
                   ),
                 ),
               ),
+
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _addRecordRow,
+                      style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        side: const BorderSide(color: Color(0xFFE0E0E0)),
+                        elevation: 1,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        '+',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _removeRecordRow,
+                      style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        side: const BorderSide(color: Color(0xFFE0E0E0)),
+                        elevation: 1,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        '-',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  ElevatedButton(
+                    onPressed: _saveRecords,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE53935),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text(
+                      'Сохранить',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+
+              if (_recordsMessage != null) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _recordsMessage!,
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
