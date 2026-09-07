@@ -564,10 +564,10 @@ Center(
       children: [
         const Expanded(
           child: Text(
-            'Учитывать вес замков 2,5 кг',
+            'Учитывать вес замков\n2,5 кг',
             style: TextStyle(
               color: Colors.black87,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
