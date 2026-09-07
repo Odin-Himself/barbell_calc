@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const BarbellApp());
 }
 
@@ -76,8 +74,9 @@ DiscResult calculateDiscs(double totalWeight) {
   final List<double> combination = greedyFill(weightOnEachSide);
 
   final double usedWeight = combination.fold(0.0, (a, b) => a + b);
-  final double remaining =
-      double.parse((weightOnEachSide - usedWeight).toStringAsFixed(3));
+  final double remaining = double.parse(
+    (weightOnEachSide - usedWeight).toStringAsFixed(3),
+  );
 
   if (remaining > 0.001) {
     final additional = findCombinations(remaining, 4);
@@ -360,7 +359,10 @@ class BarbellBar extends StatelessWidget {
           end: Alignment.bottomCenter,
         ),
         // Убрали borderRadius: углы теперь прямые
-        border: Border.all(color: Colors.black54, width: 1), // обводка как у дисков
+        border: Border.all(
+          color: Colors.black54,
+          width: 1,
+        ), // обводка как у дисков
       ),
       child: const Center(
         child: Text(
@@ -449,12 +451,15 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Container(
-                      color: const Color(0xFF16213E),
+                      color: Colors.white, // 1) фон контейнера белый
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
@@ -465,74 +470,93 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           const Text(
                             'Введите вес на штанге (кг):',
                             style: TextStyle(
-                              color: Color(0xFFE94560),
+                              color: Colors.black87,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          TextField(
-                            controller: _controller,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: false,
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-                            ],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFF0F3460),
-                              hintText: 'Например: 100',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.3),
-                                fontSize: 20,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                              suffixText: 'кг',
-                              suffixStyle: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 18,
-                              ),
-                            ),
-                            onSubmitted: (_) => _calculate(),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _calculate,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE94560),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 4,
-                              ),
-                              child: const Text(
-                                'РАССЧИТАТЬ',
-                                style: TextStyle(
-                                  fontSize: 16,
+
+                          // 2) поле уже и по центру
+                          Center(
+                            child: SizedBox(
+                              width:
+                                  280, // примерно в 2 раза уже от maxWidth: 560
+                              child: TextField(
+                                controller: _controller,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                      signed: false,
+                                    ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[\d.,]'),
+                                  ),
+                                ],
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF3F4F6),
+                                  hintText: 'Например: 100',
+                                  hintStyle: const TextStyle(
+                                    color: Colors.black45,
+                                    fontSize: 18,
+                                  ),
+                                  // 3) форма "таблетка"
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 14,
+                                  ),
+                                  suffixText: 'кг',
+                                  suffixStyle: const TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                onSubmitted: (_) => _calculate(),
                               ),
                             ),
                           ),
+
+                          const SizedBox(height: 12),
+
+                          // 2) кнопка уже и по центру
+                          Center(
+                            child: SizedBox(
+                              width: 280,
+                              child: ElevatedButton(
+                                onPressed: _calculate,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE94560),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  // 3) форма "таблетка"
+                                  shape: const StadiumBorder(),
+                                  elevation: 2,
+                                ),
+                                child: const Text(
+                                  'РАССЧИТАТЬ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
                           if (_error != null) ...[
                             const SizedBox(height: 10),
                             Text(
@@ -675,10 +699,7 @@ class _BarbellVisual extends StatelessWidget {
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.none,
             children: const [
-              Positioned(
-                left: 0,
-                child: BarbellBar(),
-              ),
+              Positioned(left: 0, child: BarbellBar()),
               Positioned(
                 left: 79, // заход бобышки на гриф на 1 px
                 child: _BarbellBobyshka(),
