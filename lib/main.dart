@@ -407,6 +407,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   final TextEditingController _controller = TextEditingController();
   DiscResult? _result;
   String? _error;
+  bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
 
   void _calculate() {
     final text = _controller.text.trim().replaceAll(',', '.');
@@ -554,6 +555,41 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 12), // тот же отступ, что между полем и кнопкой
+Center(
+  child: SizedBox(
+    width: 280, // та же ширина, что у поля и кнопки
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Expanded(
+          child: Text(
+            'Учитывать вес замков 2,5 кг',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Switch(
+          value: _includeLocks,
+          activeColor: Colors.white, // цвет бегунка во включенном состоянии
+          activeTrackColor: const Color(0xFFE53935), // дорожка как диск 25 кг
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFFBDBDBD),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onChanged: (value) {
+            setState(() {
+              _includeLocks = value;
+            });
+          },
+        ),
+      ],
+    ),
+  ),
+),
+                          
                           if (_error != null) ...[
                             const SizedBox(height: 10),
                             Text(
