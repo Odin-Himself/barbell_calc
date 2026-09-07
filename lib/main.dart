@@ -409,38 +409,382 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   DiscResult? _result;
   String? _error;
   bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
+  int _activeTab = 0; // 0 = Расчет, 1 = Мои рекорды, 2 = Настройки
 
   void _calculate() {
-  final text = _controller.text.trim().replaceAll(',', '.');
-  final weight = double.tryParse(text);
+    final text = _controller.text.trim().replaceAll(',', '.');
+    final weight = double.tryParse(text);
 
-  if (weight == null) {
+    if (weight == null) {
+      setState(() {
+        _error = 'Введите числовое значение веса в кг';
+        _result = null;
+      });
+      return;
+    }
+
+    final res = calculateDiscs(weight, includeLocks: _includeLocks);
     setState(() {
-      _error = 'Введите числовое значение веса в кг';
-      _result = null;
+      _error = null;
+      _result = res;
     });
-    return;
   }
 
-  final res = calculateDiscs(weight, includeLocks: _includeLocks);
-  setState(() {
-    _error = null;
-    _result = res;
-  });
-}
+  void _onIncludeLocksChanged(bool value) {
+    setState(() {
+      _includeLocks = value;
+    });
 
-void _onIncludeLocksChanged(bool value) {
-  setState(() {
-    _includeLocks = value;
-  });
+    final text = _controller.text.trim().replaceAll(',', '.');
+    final weight = double.tryParse(text);
 
-  final text = _controller.text.trim().replaceAll(',', '.');
-  final weight = double.tryParse(text);
-
-  if (weight != null) {
-    _calculate();
+    if (weight != null) {
+      _calculate();
+    }
   }
-}
+
+  Widget _buildTabButton({
+    required int index,
+    required String title,
+    required IconData icon,
+  }) {
+    final bool isActive = _activeTab == index;
+
+    return SizedBox(
+      width: 135, // подберите 145-155
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          setState(() {
+            _activeTab = index;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFE53935) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isActive ? Colors.white : Colors.black54,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalculationTab() {
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: Text(
+                          'Введите вес на штанге, кг',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: SizedBox(
+                          width: 280,
+                          child: TextField(
+                            controller: _controller,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: false,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                            ],
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF1F3F5),
+                              hintText: 'Например: 100',
+                              hintStyle: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 18,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(999),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(999),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE53935),
+                                  width: 2, // Толщина обводки поля ввода
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(999),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE53935),
+                                  width: 2, // Толщина обводки поля ввода
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              suffixText: 'кг',
+                              suffixStyle: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 16,
+                              ),
+                            ),
+                            onSubmitted: (_) => _calculate(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: SizedBox(
+                          width: 280,
+                          child: ElevatedButton(
+                            onPressed: _calculate,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE53935),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: const StadiumBorder(),
+                              elevation: 2,
+                            ),
+                            child: const Text(
+                              'РАССЧИТАТЬ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: SizedBox(
+                          width: 280,
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Учитывать вес замков\n2,5 кг',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Builder(
+                                builder: (context) {
+                                  // Меняйте только этот параметр:
+                                  // это диаметр белого кружка (thumb).
+                                  const double knobDiameter = 24;
+
+                                  const double trackPadding = 3;
+                                  final double trackHeight =
+                                      knobDiameter + trackPadding * 2;
+                                  final double trackWidth =
+                                      knobDiameter * 2.05 + trackPadding * 2;
+
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        _onIncludeLocksChanged(!_includeLocks),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      curve: Curves.easeOut,
+                                      width: trackWidth,
+                                      height: trackHeight,
+                                      padding: const EdgeInsets.all(trackPadding),
+                                      decoration: BoxDecoration(
+                                        color: _includeLocks
+                                            ? const Color(0xFFE53935)
+                                            : const Color(0xFFBDBDBD),
+                                        borderRadius:
+                                            BorderRadius.circular(trackHeight / 2),
+                                      ),
+                                      child: AnimatedAlign(
+                                        duration:
+                                            const Duration(milliseconds: 180),
+                                        curve: Curves.easeOut,
+                                        alignment: _includeLocks
+                                            ? Alignment.centerRight
+                                            : Alignment.centerLeft,
+                                        child: Container(
+                                          width: knobDiameter,
+                                          height: knobDiameter,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          _error!,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (_result == null)
+                  SizedBox(
+                    height: 320,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.fitness_center,
+                            size: 80,
+                            color: Colors.black.withOpacity(0.15),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Введите вес и нажмите\n«РАССЧИТАТЬ»',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.3),
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (_result!.discs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      _result!.resultString,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 18,
+                      ),
+                    ),
+                  )
+                else
+                  Column(
+                    children: [
+                      SizedBox(
+                        height: 280,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          child: Center(
+                            child: _BarbellVisual(
+                              discs: _result!.discs,
+                              includeLocks: _includeLocks,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        color: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Проверочная строка',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Text(
+                                _result!.resultString,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _DiscLegend(discs: _result!.discs),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -461,287 +805,68 @@ void _onIncludeLocksChanged(bool value) {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Center(
-                            child: Text(
-                              'Введите вес на штанге, кг',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Center(
-                            child: SizedBox(
-                              width: 280,
-                              child: TextField(
-                                controller: _controller,
-                                keyboardType: const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                  signed: false,
-                                ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-                                ],
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: const Color(0xFFF1F3F5),
-                                  hintText: 'Например: 100',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.black45,
-                                    fontSize: 18,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE53935),
-                                      width: 2, // Толщина обводки поля ввода
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE53935),
-                                      width: 2, // Толщина обводки поля ввода
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  suffixText: 'кг',
-                                  suffixStyle: const TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                onSubmitted: (_) => _calculate(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Center(
-                            child: SizedBox(
-                              width: 280,
-                              child: ElevatedButton(
-                                onPressed: _calculate,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE53935),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: const StadiumBorder(),
-                                  elevation: 2,
-                                ),
-                                child: const Text(
-                                  'РАССЧИТАТЬ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12), // тот же отступ, что между полем и кнопкой
-Center(
-  child: SizedBox(
-    width: 280,
-    child: Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Учитывать вес замков\n2,5 кг',
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Builder(
-          builder: (context) {
-            // Меняйте ТОЛЬКО этот параметр:
-            // это диаметр белого кружка (thumb), от него масштабируется весь toggle.
-            const double knobDiameter = 30;
-
-            const double trackPadding = 3;
-            final double trackHeight = knobDiameter + trackPadding * 2;
-            final double trackWidth = knobDiameter * 2.05 + trackPadding * 2;
-
-            return GestureDetector(
-              onTap: () => _onIncludeLocksChanged(!_includeLocks),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                width: trackWidth,
-                height: trackHeight,
-                padding: const EdgeInsets.all(trackPadding),
-                decoration: BoxDecoration(
-                  color: _includeLocks
-                      ? const Color(0xFFE53935)
-                      : const Color(0xFFBDBDBD),
-                  borderRadius: BorderRadius.circular(trackHeight / 2),
-                ),
-                child: AnimatedAlign(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  alignment: _includeLocks
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    width: knobDiameter,
-                    height: knobDiameter,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+        child: Column(
+          children: [
+            Expanded(
+              child: IndexedStack(
+                index: _activeTab,
+                children: [
+                  _buildCalculationTab(),
+                  const Center(
+                    child: Text(
+                      'Мои рекорды',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
+                  const Center(
+                    child: Text(
+                      'Настройки',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-      ],
+            ),
+            Center(
+  child: ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 560),
+    child: Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildTabButton(
+            index: 0,
+            title: 'Расчет дисков',
+            icon: Icons.calculate_outlined,
+          ),
+          const SizedBox(width: 8),
+          _buildTabButton(
+            index: 1,
+            title: 'Мои рекорды',
+            icon: Icons.emoji_events_outlined,
+          ),
+          const SizedBox(width: 8),
+          _buildTabButton(
+            index: 2,
+            title: 'Настройки',
+            icon: Icons.settings_outlined,
+          ),
+        ],
+      ),
     ),
   ),
 ),
-                          
-                          if (_error != null) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              _error!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_result == null)
-                      SizedBox(
-                        height: 320,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.fitness_center,
-                                size: 80,
-                                color: Colors.black.withOpacity(0.15),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Введите вес и нажмите\n«РАССЧИТАТЬ»',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.black.withOpacity(0.3),
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (_result!.discs.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Text(
-                          _result!.resultString,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 18,
-                          ),
-                        ),
-                      )
-                    else
-                      Column(
-                        children: [
-                          SizedBox(
-                            height: 280,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                              child: Center(
-                                child: _BarbellVisual(
-  discs: _result!.discs,
-  includeLocks: _includeLocks,
-),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            color: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Проверочная строка',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Text(
-                                    _result!.resultString,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 12,
-                                      fontFamily: 'monospace',
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _DiscLegend(discs: _result!.discs),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -901,7 +1026,7 @@ class _DiscLegend extends StatelessWidget {
     final sorted = counts.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Container(
-      color: const Color(0xFF16213E),
+      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Wrap(
         spacing: 12,
