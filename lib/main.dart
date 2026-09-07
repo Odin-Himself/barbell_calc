@@ -558,9 +558,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           const SizedBox(height: 12), // тот же отступ, что между полем и кнопкой
 Center(
   child: SizedBox(
-    width: 280, // та же ширина, что у поля и кнопки
+    width: 280,
     child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Expanded(
           child: Text(
@@ -572,17 +571,51 @@ Center(
             ),
           ),
         ),
-        Switch(
-          value: _includeLocks,
-          activeColor: Colors.white, // цвет бегунка во включенном состоянии
-          activeTrackColor: const Color(0xFFE53935), // дорожка как диск 25 кг
-          inactiveThumbColor: Colors.white,
-          inactiveTrackColor: const Color(0xFFBDBDBD),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (value) {
-            setState(() {
-              _includeLocks = value;
-            });
+        Builder(
+          builder: (context) {
+            // Меняйте ТОЛЬКО этот параметр:
+            // это диаметр белого кружка (thumb), от него масштабируется весь toggle.
+            const double knobDiameter = 30;
+
+            const double trackPadding = 3;
+            final double trackHeight = knobDiameter + trackPadding * 2;
+            final double trackWidth = knobDiameter * 2.05 + trackPadding * 2;
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _includeLocks = !_includeLocks;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                width: trackWidth,
+                height: trackHeight,
+                padding: const EdgeInsets.all(trackPadding),
+                decoration: BoxDecoration(
+                  color: _includeLocks
+                      ? const Color(0xFFE53935)
+                      : const Color(0xFFBDBDBD),
+                  borderRadius: BorderRadius.circular(trackHeight / 2),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  alignment: _includeLocks
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    width: knobDiameter,
+                    height: knobDiameter,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            );
           },
         ),
       ],
