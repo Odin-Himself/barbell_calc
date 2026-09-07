@@ -15,26 +15,28 @@ class DiscResult {
   const DiscResult({required this.resultString, required this.discs});
 }
 
-DiscResult calculateDiscs(double totalWeight) {
+DiscResult calculateDiscs(double totalWeight, {bool includeLocks = true}) {
   const double barbellWeight = 20.0;
-  const double lockWeight = 2.5;
+  final double lockWeight = includeLocks ? 2.5 : 0.0;
+
   final List<double> discWeights = [25, 20, 15, 10, 5, 2.5, 1.25, 1, 0.5];
 
   final double weightOnEachSide =
       (totalWeight - barbellWeight - 2 * lockWeight) / 2;
 
   if (weightOnEachSide < 0) {
-    return const DiscResult(
-      resultString:
-          'Слишком маленький вес.\nМинимум: гриф (20) + 2 замка (5) = 25 кг.',
-      discs: [],
+    final minTotal = includeLocks ? 25 : 20;
+    return DiscResult(
+      resultString: includeLocks
+          ? 'Слишком маленький вес.\nМинимум: гриф (20) + 2 замка (5) = 25 кг.'
+          : 'Слишком маленький вес.\nМинимум: только гриф = 20 кг.',
+      discs: const [],
     );
   }
 
   List<double> greedyFill(double target) {
     final List<double> combo = [];
     double remaining = target;
-
     for (int i = 0; i < 4 && i < discWeights.length; i++) {
       final double disc = discWeights[i];
       while (remaining >= disc - 0.001) {
@@ -72,11 +74,9 @@ DiscResult calculateDiscs(double totalWeight) {
   }
 
   final List<double> combination = greedyFill(weightOnEachSide);
-
   final double usedWeight = combination.fold(0.0, (a, b) => a + b);
-  final double remaining = double.parse(
-    (weightOnEachSide - usedWeight).toStringAsFixed(3),
-  );
+  final double remaining =
+      double.parse((weightOnEachSide - usedWeight).toStringAsFixed(3));
 
   if (remaining > 0.001) {
     final additional = findCombinations(remaining, 4);
@@ -96,8 +96,9 @@ DiscResult calculateDiscs(double totalWeight) {
       2 * (combination.fold(0.0, (a, b) => a + b) + lockWeight) + barbellWeight;
   final int totalInt = totalSum.round();
 
-  final String result =
-      '${_formatWeight(lockWeight)} = $leftStr = ${_formatWeight(barbellWeight)} = $rightStr = ${_formatWeight(lockWeight)}    [$totalInt кг]';
+  final String result = includeLocks
+      ? '${_formatWeight(lockWeight)} = $leftStr = ${_formatWeight(barbellWeight)} = $rightStr = ${_formatWeight(lockWeight)}    [$totalInt кг]'
+      : '$leftStr = ${_formatWeight(barbellWeight)} = $rightStr    [$totalInt кг]';
 
   return DiscResult(resultString: result, discs: combination);
 }
@@ -410,23 +411,36 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
 
   void _calculate() {
-    final text = _controller.text.trim().replaceAll(',', '.');
-    final weight = double.tryParse(text);
+  final text = _controller.text.trim().replaceAll(',', '.');
+  final weight = double.tryParse(text);
 
-    if (weight == null) {
-      setState(() {
-        _error = 'Введите числовое значение веса в кг';
-        _result = null;
-      });
-      return;
-    }
-
-    final res = calculateDiscs(weight);
+  if (weight == null) {
     setState(() {
-      _error = null;
-      _result = res;
+      _error = 'Введите числовое значение веса в кг';
+      _result = null;
     });
+    return;
   }
+
+  final res = calculateDiscs(weight, includeLocks: _includeLocks);
+  setState(() {
+    _error = null;
+    _result = res;
+  });
+}
+
+void _onIncludeLocksChanged(bool value) {
+  setState(() {
+    _includeLocks = value;
+  });
+
+  final text = _controller.text.trim().replaceAll(',', '.');
+  final weight = double.tryParse(text);
+
+  if (weight != null) {
+    _calculate();
+  }
+}
 
   @override
   void dispose() {
@@ -582,11 +596,7 @@ Center(
             final double trackWidth = knobDiameter * 2.05 + trackPadding * 2;
 
             return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _includeLocks = !_includeLocks;
-                });
-              },
+              onTap: () => _onIncludeLocksChanged(!_includeLocks),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOut,
@@ -683,7 +693,10 @@ Center(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: Center(
-                                child: _BarbellVisual(discs: _result!.discs),
+                                child: _BarbellVisual(
+  discs: _result!.discs,
+  includeLocks: _includeLocks,
+),
                               ),
                             ),
                           ),
@@ -737,8 +750,12 @@ Center(
 
 class _BarbellVisual extends StatelessWidget {
   final List<double> discs; // диски одной стороны (от центра к краю)
+  final bool includeLocks;
 
-  const _BarbellVisual({required this.discs});
+  const _BarbellVisual({
+    required this.discs,
+    required this.includeLocks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -751,31 +768,30 @@ class _BarbellVisual extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Гриф (нижний слой) + бобышка (верхний слой) с нахлестом.
         SizedBox(
-          width: 103, // 80 + 24 - 1
+          width: 103,
           height: 76,
           child: Stack(
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.none,
             children: const [
-              Positioned(left: 0, child: BarbellBar()),
               Positioned(
-                left: 79, // заход бобышки на гриф на 1 px
+                left: 0,
+                child: BarbellBar(),
+              ),
+              Positioned(
+                left: 79,
                 child: _BarbellBobyshka(),
               ),
             ],
           ),
         ),
-
-        // Нижний слой: втулка (сдвинута влево под бобышку).
-        // Верхний слой: диски + замок.
         Stack(
           alignment: Alignment.centerLeft,
           clipBehavior: Clip.none,
           children: [
             Transform.translate(
-              offset: const Offset(-1, 0), // втулка уходит под бобышку на 1 px
+              offset: const Offset(-1, 0),
               child: const _BarbellSleeve(),
             ),
             Row(
@@ -790,7 +806,7 @@ class _BarbellVisual extends StatelessWidget {
                   }
                   return DiscWidget(weight: d, topIndex: idx);
                 }),
-                const LockWidget(),
+                if (includeLocks) const LockWidget(),
               ],
             ),
           ],
