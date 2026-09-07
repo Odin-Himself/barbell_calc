@@ -786,6 +786,104 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
     );
   }
 
+Widget _buildRecordsTab() {
+  final rows = [
+    ['1', '16.08.2026', 'Присед', '140 кг', '5'],
+    ['2', '14.08.2026', 'Жим лежа', '100 кг', '6'],
+    ['3', '12.08.2026', 'Становая тяга', '180 кг', '3'],
+    ['4', '10.08.2026', 'Жим стоя', '65 кг', '8'],
+    ['5', '08.08.2026', 'Тяга в наклоне', '90 кг', '7'],
+  ];
+
+  return SingleChildScrollView(
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.emoji_events,
+                    color: Color(0xFFFFB300),
+                    size: 30,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Мои рекорды',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.all(
+                        const Color(0xFFF5F7FA),
+                      ),
+                      dataRowMinHeight: 48,
+                      dataRowMaxHeight: 56,
+                      headingTextStyle: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      columns: const [
+                        DataColumn(label: Text('№')),
+                        DataColumn(label: Text('Дата')),
+                        DataColumn(label: Text('Упражнение')),
+                        DataColumn(label: Text('Вес на штанге')),
+                        DataColumn(label: Text('Количество повторений')),
+                      ],
+                      rows: rows.map((r) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(r[0])),
+                            DataCell(Text(r[1])),
+                            DataCell(Text(r[2])),
+                            DataCell(Text(r[3])),
+                            DataCell(Text(r[4])),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
   @override
   void dispose() {
     _controller.dispose();
@@ -812,16 +910,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                 index: _activeTab,
                 children: [
                   _buildCalculationTab(),
-                  const Center(
-                    child: Text(
-                      'Мои рекорды',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  _buildRecordsTab(),
                   const Center(
                     child: Text(
                       'Настройки',
