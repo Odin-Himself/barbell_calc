@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -651,6 +652,9 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
 
   AppPalette get _palette => paletteOf(widget.selectedTheme);
 
+  final Uri _authorSiteUri = Uri.parse('https://путьвбудущее.рус/');
+  final Uri _booksUri = Uri.parse('https://путьвбудущее.рус/Переводы-книг/');
+
   @override
   void initState() {
     super.initState();
@@ -729,6 +733,15 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
       _records.removeLast();
       _recordsMessage = null;
     });
+  }
+
+  Future<void> _openExternalLink(Uri uri) async {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть ссылку')),
+      );
+    }
   }
 
   void _calculate() {
@@ -1442,7 +1455,65 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                 ),
                 const SizedBox(height: 12),
                 ...AppThemeOption.values.map(_buildThemeOptionTile),
-                
+
+                const SizedBox(height: 18),
+
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _palette.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _palette.outline),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Об авторе',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _palette.text,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Если хотите больше материалов, можно перейти на сайт.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _palette.textMuted,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () => _openExternalLink(_authorSiteUri),
+                            icon: const Icon(Icons.public),
+                            label: const Text('Сайт автора'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _palette.text,
+                              side: BorderSide(color: _palette.outline),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => _openExternalLink(_booksUri),
+                            icon: const Icon(Icons.menu_book_outlined),
+                            label: const Text('Переводы книг'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _palette.accent,
+                              foregroundColor: _palette.onAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
