@@ -1079,7 +1079,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                   editableCell(
                                     value: row.date,
                                     hint: isFirst ? _firstRowHint.date : '',
-                                    width: 82,
+                                    width: 96,
                                     keyboardType: TextInputType.number,
                                     inputFormatters: [DateDdMmYyFormatter()],
                                     onChanged: (v) => row.date = v,
