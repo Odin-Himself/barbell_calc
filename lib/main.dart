@@ -77,8 +77,9 @@ DiscResult calculateDiscs(double totalWeight, {bool includeLocks = true}) {
 
   final List<double> combination = greedyFill(weightOnEachSide);
   final double usedWeight = combination.fold(0.0, (a, b) => a + b);
-  final double remaining =
-      double.parse((weightOnEachSide - usedWeight).toStringAsFixed(3));
+  final double remaining = double.parse(
+    (weightOnEachSide - usedWeight).toStringAsFixed(3),
+  );
 
   if (remaining > 0.001) {
     final additional = findCombinations(remaining, 4);
@@ -417,11 +418,11 @@ class RecordRow {
   }
 
   Map<String, dynamic> toJson() => {
-        'date': date,
-        'exercise': exercise,
-        'weight': weight,
-        'reps': reps,
-      };
+    'date': date,
+    'exercise': exercise,
+    'weight': weight,
+    'reps': reps,
+  };
 
   factory RecordRow.fromJson(Map<String, dynamic> json) {
     return RecordRow(
@@ -429,6 +430,32 @@ class RecordRow {
       exercise: (json['exercise'] ?? '').toString(),
       weight: (json['weight'] ?? '').toString(),
       reps: (json['reps'] ?? '').toString(),
+    );
+  }
+}
+
+class DateDdMmYyFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Оставляем только цифры, максимум 6: ddmmyy
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length > 6) digits = digits.substring(0, 6);
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if ((i == 1 || i == 3) && i != digits.length - 1) {
+        buffer.write('.');
+      }
+    }
+
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
@@ -447,7 +474,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
   int _activeTab = 0; // 0 = Расчет, 1 = Мои рекорды, 2 = Настройки
 
-// Добавить вот этот блок:
+  // Добавить вот этот блок:
   static const String _recordsStorageKey = 'my_records_v1';
 
   final List<RecordRow> _records = [RecordRow.empty()];
@@ -463,67 +490,84 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   String? _recordsMessage;
 
   @override
-void initState() {
-  super.initState();
-  _loadRecords();
-}
+  void initState() {
+    super.initState();
+    _loadRecords();
+  }
 
-Future<void> _loadRecords() async {
-  final prefs = await SharedPreferences.getInstance();
-  final raw = prefs.getString(_recordsStorageKey);
+  Future<void> _loadRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_recordsStorageKey);
 
-  if (raw == null || raw.isEmpty) {
+    if (raw == null || raw.isEmpty) {
+      setState(() {
+        _recordsLoaded = true;
+      });
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        _records
+          ..clear()
+          ..addAll(
+            decoded.map(
+              (e) => RecordRow.fromJson(Map<String, dynamic>.from(e)),
+            ),
+          );
+        if (_records.isEmpty) {
+          _records.add(RecordRow.empty());
+        }
+      }
+    } catch (_) {
+      _records
+        ..clear()
+        ..add(RecordRow.empty());
+    }
+
     setState(() {
       _recordsLoaded = true;
     });
-    return;
   }
 
-  try {
-    final decoded = jsonDecode(raw);
-    if (decoded is List) {
-      _records
-        ..clear()
-        ..addAll(decoded.map((e) => RecordRow.fromJson(Map<String, dynamic>.from(e))));
-      if (_records.isEmpty) {
-        _records.add(RecordRow.empty());
+  Future<void> _saveRecords() async {
+    final dateRegExp = RegExp(r'^\d{2}\.\d{2}\.\d{2}$');
+
+    for (int i = 0; i < _records.length; i++) {
+      final date = _records[i].date.trim();
+      if (date.isNotEmpty && !dateRegExp.hasMatch(date)) {
+        setState(() {
+          _recordsMessage =
+              'Ошибка в строке ${i + 1}: дата только в формате дд.мм.гг';
+        });
+        return;
       }
     }
-  } catch (_) {
-    _records
-      ..clear()
-      ..add(RecordRow.empty());
+
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode(_records.map((e) => e.toJson()).toList());
+    await prefs.setString(_recordsStorageKey, payload);
+
+    setState(() {
+      _recordsMessage = 'Данные сохранены';
+    });
   }
 
-  setState(() {
-    _recordsLoaded = true;
-  });
-}
+  void _addRecordRow() {
+    setState(() {
+      _records.add(RecordRow.empty());
+      _recordsMessage = null;
+    });
+  }
 
-Future<void> _saveRecords() async {
-  final prefs = await SharedPreferences.getInstance();
-  final payload = jsonEncode(_records.map((e) => e.toJson()).toList());
-  await prefs.setString(_recordsStorageKey, payload);
-
-  setState(() {
-    _recordsMessage = 'Данные сохранены';
-  });
-}
-
-void _addRecordRow() {
-  setState(() {
-    _records.add(RecordRow.empty());
-    _recordsMessage = null;
-  });
-}
-
-void _removeRecordRow() {
-  if (_records.length <= 1) return;
-  setState(() {
-    _records.removeLast();
-    _recordsMessage = null;
-  });
-}
+  void _removeRecordRow() {
+    if (_records.length <= 1) return;
+    setState(() {
+      _records.removeLast();
+      _recordsMessage = null;
+    });
+  }
 
   void _calculate() {
     final text = _controller.text.trim().replaceAll(',', '.');
@@ -617,7 +661,10 @@ void _removeRecordRow() {
               children: [
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -644,7 +691,9 @@ void _removeRecordRow() {
                               signed: false,
                             ),
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[\d.,]'),
+                              ),
                             ],
                             style: const TextStyle(
                               color: Colors.black87,
@@ -746,21 +795,27 @@ void _removeRecordRow() {
                                     onTap: () =>
                                         _onIncludeLocksChanged(!_includeLocks),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 180),
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
                                       curve: Curves.easeOut,
                                       width: trackWidth,
                                       height: trackHeight,
-                                      padding: const EdgeInsets.all(trackPadding),
+                                      padding: const EdgeInsets.all(
+                                        trackPadding,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: _includeLocks
                                             ? const Color(0xFFE53935)
                                             : const Color(0xFFBDBDBD),
-                                        borderRadius:
-                                            BorderRadius.circular(trackHeight / 2),
+                                        borderRadius: BorderRadius.circular(
+                                          trackHeight / 2,
+                                        ),
                                       ),
                                       child: AnimatedAlign(
-                                        duration:
-                                            const Duration(milliseconds: 180),
+                                        duration: const Duration(
+                                          milliseconds: 180,
+                                        ),
                                         curve: Curves.easeOut,
                                         alignment: _includeLocks
                                             ? Alignment.centerRight
@@ -900,220 +955,276 @@ void _removeRecordRow() {
     );
   }
 
-Widget _buildRecordsTab() {
-  if (!_recordsLoaded) {
-    return const Center(child: CircularProgressIndicator());
-  }
+  Widget _buildRecordsTab() {
+    if (!_recordsLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  Widget editableCell({
-    required String value,
-    required String hint,
-    required ValueChanged<String> onChanged,
-    TextInputType? keyboardType,
-  }) {
-    return SizedBox(
-      width: 150,
-      child: TextFormField(
-        initialValue: value,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: hint,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+    Widget editableCell({
+      required String value,
+      required String hint,
+      required ValueChanged<String> onChanged,
+      TextInputType? keyboardType,
+      List<TextInputFormatter>? inputFormatters,
+      double width = 90,
+    }) {
+      const double userInputFontSize =
+          13; // Меняйте этот размер вручную (например 12, 13, 14)
+
+      return SizedBox(
+        width: width,
+        child: TextFormField(
+          initialValue: value,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          style: const TextStyle(fontSize: userInputFontSize),
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: hint,
+            hintStyle: const TextStyle(fontSize: 13),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 8,
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.emoji_events,
+                      color: Color(0xFFFFB300),
+                      size: 30,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Мои рекорды',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: IntrinsicWidth(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: DataTable(
+                          columnSpacing: 8,
+                          horizontalMargin: 10,
+                          headingRowColor: MaterialStateProperty.all(
+                            const Color(0xFFF5F7FA),
+                          ),
+                          dataRowMinHeight: 54,
+                          dataRowMaxHeight: 62,
+                          headingTextStyle: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          columns: const [
+                            DataColumn(label: Text('№')),
+                            DataColumn(label: Text('Дата')),
+                            DataColumn(label: Text('Упражнение')),
+                            DataColumn(label: Text('Вес, кг')),
+                            DataColumn(label: Text('Повт.')),
+                          ],
+                          rows: List.generate(_records.length, (index) {
+                            final row = _records[index];
+                            final isFirst = index == 0;
+
+                            return DataRow(
+                              cells: [
+                                DataCell(
+                                  Text(
+                                    '${index + 1}',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                DataCell(
+                                  editableCell(
+                                    value: row.date,
+                                    hint: isFirst ? _firstRowHint.date : '',
+                                    width: 82,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [DateDdMmYyFormatter()],
+                                    onChanged: (v) => row.date = v,
+                                  ),
+                                ),
+                                DataCell(
+                                  editableCell(
+                                    value: row.exercise,
+                                    hint: isFirst ? _firstRowHint.exercise : '',
+                                    width:
+                                        150, // Увеличили ширину столбца "Упражнение"
+                                    onChanged: (v) => row.exercise = v,
+                                  ),
+                                ),
+                                DataCell(
+                                  editableCell(
+                                    value: row.weight,
+                                    hint: isFirst ? _firstRowHint.weight : '',
+                                    width: 84,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9.,]'),
+                                      ),
+                                    ],
+                                    onChanged: (v) => row.weight = v,
+                                  ),
+                                ),
+                                DataCell(
+                                  editableCell(
+                                    value: row.reps,
+                                    hint: isFirst ? _firstRowHint.reps : '',
+                                    width: 72,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (v) => row.reps = v,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _addRecordRow,
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black87,
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          elevation: 1,
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          '+',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _removeRecordRow,
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black87,
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          elevation: 1,
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          '-',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    ElevatedButton(
+                      onPressed: _saveRecords,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE53935),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 14,
+                        ),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text(
+                        'Сохранить',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                if (_recordsMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      _recordsMessage!,
+                      style: TextStyle(
+                        color: _recordsMessage!.startsWith('Ошибка')
+                            ? Colors.red
+                            : Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  return SingleChildScrollView(
-    child: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.emoji_events, color: Color(0xFFFFB300), size: 30),
-                  SizedBox(width: 8),
-                  Text(
-                    'Мои рекорды',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x14000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor: MaterialStateProperty.all(const Color(0xFFF5F7FA)),
-                      dataRowMinHeight: 58,
-                      dataRowMaxHeight: 70,
-                      headingTextStyle: const TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                      columns: const [
-                        DataColumn(label: Text('№')),
-                        DataColumn(label: Text('Дата')),
-                        DataColumn(label: Text('Упражнение')),
-                        DataColumn(label: Text('Вес на штанге')),
-                        DataColumn(label: Text('Повторения')),
-                      ],
-                      rows: List.generate(_records.length, (index) {
-                        final row = _records[index];
-                        final isFirst = index == 0;
-
-                        return DataRow(
-                          cells: [
-                            DataCell(Text('${index + 1}')),
-                            DataCell(
-                              editableCell(
-                                value: row.date,
-                                hint: isFirst ? _firstRowHint.date : '',
-                                onChanged: (v) => row.date = v,
-                              ),
-                            ),
-                            DataCell(
-                              editableCell(
-                                value: row.exercise,
-                                hint: isFirst ? _firstRowHint.exercise : '',
-                                onChanged: (v) => row.exercise = v,
-                              ),
-                            ),
-                            DataCell(
-                              editableCell(
-                                value: row.weight,
-                                hint: isFirst ? _firstRowHint.weight : '',
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                onChanged: (v) => row.weight = v,
-                              ),
-                            ),
-                            DataCell(
-                              editableCell(
-                                value: row.reps,
-                                hint: isFirst ? _firstRowHint.reps : '',
-                                keyboardType: TextInputType.number,
-                                onChanged: (v) => row.reps = v,
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _addRecordRow,
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
-                        side: const BorderSide(color: Color(0xFFE0E0E0)),
-                        elevation: 1,
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
-                        '+',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _removeRecordRow,
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
-                        side: const BorderSide(color: Color(0xFFE0E0E0)),
-                        elevation: 1,
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
-                        '-',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  ElevatedButton(
-                    onPressed: _saveRecords,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE53935),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      'Сохранить',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-
-              if (_recordsMessage != null) ...[
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    _recordsMessage!,
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
   @override
   void dispose() {
@@ -1156,36 +1267,36 @@ Widget _buildRecordsTab() {
               ),
             ),
             Center(
-  child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 560),
-    child: Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildTabButton(
-            index: 0,
-            title: 'Расчет дисков',
-            icon: Icons.calculate_outlined,
-          ),
-          const SizedBox(width: 8),
-          _buildTabButton(
-            index: 1,
-            title: 'Мои рекорды',
-            icon: Icons.emoji_events_outlined,
-          ),
-          const SizedBox(width: 8),
-          _buildTabButton(
-            index: 2,
-            title: 'Настройки',
-            icon: Icons.settings_outlined,
-          ),
-        ],
-      ),
-    ),
-  ),
-),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildTabButton(
+                        index: 0,
+                        title: 'Расчет дисков',
+                        icon: Icons.calculate_outlined,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildTabButton(
+                        index: 1,
+                        title: 'Мои рекорды',
+                        icon: Icons.emoji_events_outlined,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildTabButton(
+                        index: 2,
+                        title: 'Настройки',
+                        icon: Icons.settings_outlined,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1197,10 +1308,7 @@ class _BarbellVisual extends StatelessWidget {
   final List<double> discs; // диски одной стороны (от центра к краю)
   final bool includeLocks;
 
-  const _BarbellVisual({
-    required this.discs,
-    required this.includeLocks,
-  });
+  const _BarbellVisual({required this.discs, required this.includeLocks});
 
   @override
   Widget build(BuildContext context) {
@@ -1220,14 +1328,8 @@ class _BarbellVisual extends StatelessWidget {
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.none,
             children: const [
-              Positioned(
-                left: 0,
-                child: BarbellBar(),
-              ),
-              Positioned(
-                left: 79,
-                child: _BarbellBobyshka(),
-              ),
+              Positioned(left: 0, child: BarbellBar()),
+              Positioned(left: 79, child: _BarbellBobyshka()),
             ],
           ),
         ),
