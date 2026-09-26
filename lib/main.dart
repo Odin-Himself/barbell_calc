@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -27,7 +28,6 @@ DiscResult calculateDiscs(double totalWeight, {bool includeLocks = true}) {
       (totalWeight - barbellWeight - 2 * lockWeight) / 2;
 
   if (weightOnEachSide < 0) {
-    final minTotal = includeLocks ? 25 : 20;
     return DiscResult(
       resultString: includeLocks
           ? 'Слишком маленький вес.\nМинимум: гриф (20) + 2 замка (5) = 25 кг.'
@@ -153,7 +153,7 @@ double discWidth(double weight) {
 
 class DiscWidget extends StatelessWidget {
   final double weight;
-  final int? topIndex; // номер сверху (только если нужен)
+  final int? topIndex;
   const DiscWidget({super.key, required this.weight, this.topIndex});
 
   @override
@@ -178,12 +178,11 @@ class DiscWidget extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Номер сверху (например 1,2,3 для красных 25 кг)
           if (topIndex != null)
             Positioned(
               left: 0,
               right: 0,
-              top: 5, // на 5 px ниже верхней кромки
+              top: 5,
               child: Center(
                 child: Text(
                   '$topIndex',
@@ -195,8 +194,6 @@ class DiscWidget extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Вес по центру
           Center(
             child: Text(
               label,
@@ -207,8 +204,6 @@ class DiscWidget extends StatelessWidget {
               ),
             ),
           ),
-
-          // KG снизу
           Positioned(
             left: 0,
             right: 0,
@@ -235,8 +230,8 @@ class LockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double handleCoreWidth = 22; // меняете только длину ручки
-    const double handleShiftX = 4; // общий сдвиг ручки вправо/влево
+    const double handleCoreWidth = 22;
+    const double handleShiftX = 4;
 
     const double lockWidth = 28;
     const double lockHeight = 60;
@@ -288,7 +283,6 @@ class LockWidget extends StatelessWidget {
               ),
             ),
           ),
-
           Positioned(
             top: -12,
             left: handleLeft,
@@ -325,7 +319,6 @@ class LockWidget extends StatelessWidget {
               ],
             ),
           ),
-
           Positioned(
             top: -14,
             left: 0,
@@ -362,11 +355,7 @@ class BarbellBar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
-        // Убрали borderRadius: углы теперь прямые
-        border: Border.all(
-          color: Colors.black54,
-          width: 1,
-        ), // обводка как у дисков
+        border: Border.all(color: Colors.black54, width: 1),
       ),
       child: const Center(
         child: Text(
@@ -382,20 +371,186 @@ class BarbellBar extends StatelessWidget {
   }
 }
 
-class BarbellApp extends StatelessWidget {
+enum AppThemeOption { light, matrix, midnight, amber, forest }
+
+class AppPalette {
+  final String label;
+  final String description;
+  final Color background;
+  final Color surface;
+  final Color appBar;
+  final Color text;
+  final Color textMuted;
+  final Color accent;
+  final Color onAccent;
+  final Color outline;
+  final Color inputFill;
+  final Color tableHeader;
+  final Color success;
+  final Brightness brightness;
+
+  const AppPalette({
+    required this.label,
+    required this.description,
+    required this.background,
+    required this.surface,
+    required this.appBar,
+    required this.text,
+    required this.textMuted,
+    required this.accent,
+    required this.onAccent,
+    required this.outline,
+    required this.inputFill,
+    required this.tableHeader,
+    required this.success,
+    required this.brightness,
+  });
+}
+
+AppPalette paletteOf(AppThemeOption option) {
+  switch (option) {
+    case AppThemeOption.light:
+      return const AppPalette(
+        label: 'Светлая',
+        description: 'Классический светлый вид',
+        background: Color(0xFFFFFFFF),
+        surface: Color(0xFFFFFFFF),
+        appBar: Color(0xFF16213E),
+        text: Color(0xFF212121),
+        textMuted: Color(0xFF616161),
+        accent: Color(0xFFE53935),
+        onAccent: Color(0xFFFFFFFF),
+        outline: Color(0xFFE0E0E0),
+        inputFill: Color(0xFFF1F3F5),
+        tableHeader: Color(0xFFF5F7FA),
+        success: Color(0xFF2E7D32),
+        brightness: Brightness.light,
+      );
+    case AppThemeOption.matrix:
+      return const AppPalette(
+        label: 'Матрица',
+        description: 'Темно-серый фон и зеленый текст',
+        background: Color(0xFF1F2328),
+        surface: Color(0xFF2A2F35),
+        appBar: Color(0xFF171B20),
+        text: Color(0xFF39FF14),
+        textMuted: Color(0xFF8AFF76),
+        accent: Color(0xFF00E676),
+        onAccent: Color(0xFF0E1A12),
+        outline: Color(0xFF00C853),
+        inputFill: Color(0xFF333A42),
+        tableHeader: Color(0xFF233128),
+        success: Color(0xFF39FF14),
+        brightness: Brightness.dark,
+      );
+    case AppThemeOption.midnight:
+      return const AppPalette(
+        label: 'Полночь',
+        description: 'Темно-синий фон и голубые акценты',
+        background: Color(0xFF0F172A),
+        surface: Color(0xFF17233A),
+        appBar: Color(0xFF0B1222),
+        text: Color(0xFFE2ECFF),
+        textMuted: Color(0xFFA2B5D8),
+        accent: Color(0xFF4FC3F7),
+        onAccent: Color(0xFF062033),
+        outline: Color(0xFF4D6488),
+        inputFill: Color(0xFF233554),
+        tableHeader: Color(0xFF21314D),
+        success: Color(0xFF81C784),
+        brightness: Brightness.dark,
+      );
+    case AppThemeOption.amber:
+      return const AppPalette(
+        label: 'Янтарь',
+        description: 'Графит и теплые янтарные линии',
+        background: Color(0xFF24201A),
+        surface: Color(0xFF2F2A22),
+        appBar: Color(0xFF1E1A15),
+        text: Color(0xFFF6E7CA),
+        textMuted: Color(0xFFD9C7A6),
+        accent: Color(0xFFFFB74D),
+        onAccent: Color(0xFF2A1B08),
+        outline: Color(0xFF8A714A),
+        inputFill: Color(0xFF3A3329),
+        tableHeader: Color(0xFF3B342A),
+        success: Color(0xFFA5D6A7),
+        brightness: Brightness.dark,
+      );
+    case AppThemeOption.forest:
+      return const AppPalette(
+        label: 'Лес',
+        description: 'Темно-зеленый фон и мятные акценты',
+        background: Color(0xFF16221A),
+        surface: Color(0xFF1F2D23),
+        appBar: Color(0xFF111B14),
+        text: Color(0xFFD8F5E2),
+        textMuted: Color(0xFFA5D8B9),
+        accent: Color(0xFF6DD39E),
+        onAccent: Color(0xFF102218),
+        outline: Color(0xFF4F8968),
+        inputFill: Color(0xFF2A3A2F),
+        tableHeader: Color(0xFF2A3A30),
+        success: Color(0xFFA5D6A7),
+        brightness: Brightness.dark,
+      );
+  }
+}
+
+class BarbellApp extends StatefulWidget {
   const BarbellApp({super.key});
 
   @override
+  State<BarbellApp> createState() => _BarbellAppState();
+}
+
+class _BarbellAppState extends State<BarbellApp> {
+  static const String _themeStorageKey = 'barbell_theme_v1';
+
+  AppThemeOption _selectedTheme = AppThemeOption.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idx = prefs.getInt(_themeStorageKey);
+    if (idx == null) return;
+    if (idx < 0 || idx >= AppThemeOption.values.length) return;
+    if (!mounted) return;
+
+    setState(() {
+      _selectedTheme = AppThemeOption.values[idx];
+    });
+  }
+
+  Future<void> _setTheme(AppThemeOption option) async {
+    setState(() {
+      _selectedTheme = option;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_themeStorageKey, option.index);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final palette = paletteOf(_selectedTheme);
+
     return MaterialApp(
       title: 'Калькулятор дисков штанги',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         useMaterial3: true,
         fontFamily: 'Roboto',
+        brightness: palette.brightness,
       ),
-      home: const BarbellCalculatorPage(),
+      home: BarbellCalculatorPage(
+        selectedTheme: _selectedTheme,
+        onThemeChanged: _setTheme,
+      ),
     );
   }
 }
@@ -418,11 +573,11 @@ class RecordRow {
   }
 
   Map<String, dynamic> toJson() => {
-    'date': date,
-    'exercise': exercise,
-    'weight': weight,
-    'reps': reps,
-  };
+        'date': date,
+        'exercise': exercise,
+        'weight': weight,
+        'reps': reps,
+      };
 
   factory RecordRow.fromJson(Map<String, dynamic> json) {
     return RecordRow(
@@ -440,7 +595,6 @@ class DateDdMmYyFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Оставляем только цифры, максимум 6: ddmmyy
     String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (digits.length > 6) digits = digits.substring(0, 6);
 
@@ -461,7 +615,14 @@ class DateDdMmYyFormatter extends TextInputFormatter {
 }
 
 class BarbellCalculatorPage extends StatefulWidget {
-  const BarbellCalculatorPage({super.key});
+  final AppThemeOption selectedTheme;
+  final ValueChanged<AppThemeOption> onThemeChanged;
+
+  const BarbellCalculatorPage({
+    super.key,
+    required this.selectedTheme,
+    required this.onThemeChanged,
+  });
 
   @override
   State<BarbellCalculatorPage> createState() => _BarbellCalculatorPageState();
@@ -471,16 +632,15 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   final TextEditingController _controller = TextEditingController();
   DiscResult? _result;
   String? _error;
-  bool _includeLocks = true; // положение переключателя "Учитывать вес замков"
-  int _activeTab = 0; // 0 = Расчет, 1 = Мои рекорды, 2 = Настройки
+  bool _includeLocks = true;
+  int _activeTab = 0;
 
-  // Добавить вот этот блок:
   static const String _recordsStorageKey = 'my_records_v1';
 
   final List<RecordRow> _records = [RecordRow.empty()];
 
   final RecordRow _firstRowHint = RecordRow(
-    date: '16.08.2026',
+    date: '16.08.26',
     exercise: 'Присед',
     weight: '140',
     reps: '5',
@@ -488,6 +648,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
 
   bool _recordsLoaded = false;
   String? _recordsMessage;
+
+  AppPalette get _palette => paletteOf(widget.selectedTheme);
 
   @override
   void initState() {
@@ -609,7 +771,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
     final bool isActive = _activeTab == index;
 
     return SizedBox(
-      width: 135, // подберите 145-155
+      width: 135,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () {
@@ -621,9 +783,9 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFE53935) : Colors.white,
+            color: isActive ? _palette.accent : _palette.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            border: Border.all(color: _palette.outline, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -631,13 +793,13 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
               Icon(
                 icon,
                 size: 16,
-                color: isActive ? Colors.white : Colors.black54,
+                color: isActive ? _palette.onAccent : _palette.textMuted,
               ),
               const SizedBox(width: 6),
               Text(
                 title,
                 style: TextStyle(
-                  color: isActive ? Colors.white : Colors.black87,
+                  color: isActive ? _palette.onAccent : _palette.text,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -660,7 +822,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  color: Colors.white,
+                  color: _palette.surface,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -668,12 +830,12 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Center(
+                      Center(
                         child: Text(
                           'Введите вес на штанге, кг',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.black87,
+                            color: _palette.text,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -695,17 +857,17 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                 RegExp(r'[\d.,]'),
                               ),
                             ],
-                            style: const TextStyle(
-                              color: Colors.black87,
+                            style: TextStyle(
+                              color: _palette.text,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: const Color(0xFFF1F3F5),
+                              fillColor: _palette.inputFill,
                               hintText: 'Например: 100',
-                              hintStyle: const TextStyle(
-                                color: Colors.black45,
+                              hintStyle: TextStyle(
+                                color: _palette.textMuted,
                                 fontSize: 18,
                               ),
                               border: OutlineInputBorder(
@@ -714,16 +876,16 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(999),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE53935),
-                                  width: 2, // Толщина обводки поля ввода
+                                borderSide: BorderSide(
+                                  color: _palette.accent,
+                                  width: 2,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(999),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE53935),
-                                  width: 2, // Толщина обводки поля ввода
+                                borderSide: BorderSide(
+                                  color: _palette.accent,
+                                  width: 2,
                                 ),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
@@ -731,8 +893,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                 vertical: 14,
                               ),
                               suffixText: 'кг',
-                              suffixStyle: const TextStyle(
-                                color: Colors.black54,
+                              suffixStyle: TextStyle(
+                                color: _palette.textMuted,
                                 fontSize: 16,
                               ),
                             ),
@@ -747,8 +909,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           child: ElevatedButton(
                             onPressed: _calculate,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE53935),
-                              foregroundColor: Colors.white,
+                              backgroundColor: _palette.accent,
+                              foregroundColor: _palette.onAccent,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: const StadiumBorder(),
                               elevation: 2,
@@ -769,11 +931,11 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           width: 280,
                           child: Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Учитывать вес замков\n2,5 кг',
                                   style: TextStyle(
-                                    color: Colors.black87,
+                                    color: _palette.text,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -781,10 +943,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               ),
                               Builder(
                                 builder: (context) {
-                                  // Меняйте только этот параметр:
-                                  // это диаметр белого кружка (thumb).
                                   const double knobDiameter = 24;
-
                                   const double trackPadding = 3;
                                   final double trackHeight =
                                       knobDiameter + trackPadding * 2;
@@ -806,8 +965,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: _includeLocks
-                                            ? const Color(0xFFE53935)
-                                            : const Color(0xFFBDBDBD),
+                                            ? _palette.accent
+                                            : _palette.outline,
                                         borderRadius: BorderRadius.circular(
                                           trackHeight / 2,
                                         ),
@@ -823,8 +982,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                         child: Container(
                                           width: knobDiameter,
                                           height: knobDiameter,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
+                                          decoration: BoxDecoration(
+                                            color: _palette.surface,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -861,14 +1020,14 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           Icon(
                             Icons.fitness_center,
                             size: 80,
-                            color: Colors.black.withOpacity(0.15),
+                            color: _palette.text.withOpacity(0.18),
                           ),
                           const SizedBox(height: 20),
                           Text(
                             'Введите вес и нажмите\n«РАССЧИТАТЬ»',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.black.withOpacity(0.3),
+                              color: _palette.text.withOpacity(0.35),
                               fontSize: 18,
                             ),
                           ),
@@ -917,10 +1076,10 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Проверочная строка',
                               style: TextStyle(
-                                color: Colors.black,
+                                color: _palette.text,
                                 fontSize: 12,
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.w600,
@@ -932,8 +1091,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                               scrollDirection: Axis.horizontal,
                               child: Text(
                                 _result!.resultString,
-                                style: const TextStyle(
-                                  color: Colors.black,
+                                style: TextStyle(
+                                  color: _palette.text,
                                   fontSize: 12,
                                   fontFamily: 'monospace',
                                   fontWeight: FontWeight.w600,
@@ -944,7 +1103,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           ],
                         ),
                       ),
-                      _DiscLegend(discs: _result!.discs),
+                      _DiscLegend(discs: _result!.discs, palette: _palette),
                     ],
                   ),
               ],
@@ -955,7 +1114,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
     );
   }
 
-  Widget _buildRecordsTab() {
+    Widget _buildRecordsTab() {
     if (!_recordsLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -969,7 +1128,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
       double width = 90,
     }) {
       const double userInputFontSize =
-          13; // Меняйте этот размер вручную (например 12, 13, 14)
+          12; // Можешь менять вручную: 11, 12, 13, чтобы подобрать кегль
 
       return SizedBox(
         width: width,
@@ -977,17 +1136,36 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
           initialValue: value,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
-          style: const TextStyle(fontSize: userInputFontSize),
+          style: TextStyle(
+            fontSize: userInputFontSize,
+            color: _palette.text,
+          ),
           onChanged: onChanged,
           decoration: InputDecoration(
             isDense: true,
+            filled: true,
+            fillColor: _palette.surface,
             hintText: hint,
-            hintStyle: const TextStyle(fontSize: 13),
+            hintStyle: TextStyle(
+              fontSize: userInputFontSize,
+              color: _palette.textMuted,
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 8,
               vertical: 8,
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _palette.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _palette.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _palette.accent, width: 2),
+            ),
           ),
         ),
       );
@@ -1005,17 +1183,17 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.emoji_events,
-                      color: Color(0xFFFFB300),
+                      color: _palette.accent,
                       size: 30,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Мои рекорды',
                       style: TextStyle(
-                        color: Colors.black87,
+                        color: _palette.text,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -1024,20 +1202,21 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                   ],
                 ),
                 const SizedBox(height: 14),
-
                 Align(
                   alignment: Alignment.topCenter,
                   child: IntrinsicWidth(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _palette.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
-                        boxShadow: const [
+                        border: Border.all(color: _palette.outline),
+                        boxShadow: [
                           BoxShadow(
-                            color: Color(0x14000000),
+                            color: Colors.black.withOpacity(
+                              _palette.brightness == Brightness.dark ? 0.25 : 0.08,
+                            ),
                             blurRadius: 8,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -1047,14 +1226,19 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                           columnSpacing: 8,
                           horizontalMargin: 10,
                           headingRowColor: MaterialStateProperty.all(
-                            const Color(0xFFF5F7FA),
+                            _palette.tableHeader,
                           ),
                           dataRowMinHeight: 54,
                           dataRowMaxHeight: 62,
-                          headingTextStyle: const TextStyle(
-                            color: Colors.black87,
+                          dividerThickness: 1,
+                          headingTextStyle: TextStyle(
+                            color: _palette.text,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
+                          ),
+                          dataTextStyle: TextStyle(
+                            color: _palette.text,
+                            fontSize: 13,
                           ),
                           columns: const [
                             DataColumn(label: Text('№')),
@@ -1072,14 +1256,17 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                 DataCell(
                                   Text(
                                     '${index + 1}',
-                                    style: const TextStyle(fontSize: 13),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: _palette.text,
+                                    ),
                                   ),
                                 ),
                                 DataCell(
                                   editableCell(
                                     value: row.date,
                                     hint: isFirst ? _firstRowHint.date : '',
-                                    width: 96,
+                                    width: 104,
                                     keyboardType: TextInputType.number,
                                     inputFormatters: [DateDdMmYyFormatter()],
                                     onChanged: (v) => row.date = v,
@@ -1089,8 +1276,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                   editableCell(
                                     value: row.exercise,
                                     hint: isFirst ? _firstRowHint.exercise : '',
-                                    width:
-                                        150, // Увеличили ширину столбца "Упражнение"
+                                    width: 150,
                                     onChanged: (v) => row.exercise = v,
                                   ),
                                 ),
@@ -1101,8 +1287,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                                     width: 84,
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
+                                      decimal: true,
+                                    ),
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(
                                         RegExp(r'[0-9.,]'),
@@ -1131,7 +1317,6 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1143,9 +1328,9 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                         onPressed: _addRecordRow,
                         style: ElevatedButton.styleFrom(
                           shape: const CircleBorder(),
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black87,
-                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          backgroundColor: _palette.surface,
+                          foregroundColor: _palette.text,
+                          side: BorderSide(color: _palette.outline),
                           elevation: 1,
                           padding: EdgeInsets.zero,
                         ),
@@ -1166,9 +1351,9 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                         onPressed: _removeRecordRow,
                         style: ElevatedButton.styleFrom(
                           shape: const CircleBorder(),
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black87,
-                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          backgroundColor: _palette.surface,
+                          foregroundColor: _palette.text,
+                          side: BorderSide(color: _palette.outline),
                           elevation: 1,
                           padding: EdgeInsets.zero,
                         ),
@@ -1185,8 +1370,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                     ElevatedButton(
                       onPressed: _saveRecords,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE53935),
-                        foregroundColor: Colors.white,
+                        backgroundColor: _palette.accent,
+                        foregroundColor: _palette.onAccent,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 22,
                           vertical: 14,
@@ -1203,7 +1388,6 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                     ),
                   ],
                 ),
-
                 if (_recordsMessage != null) ...[
                   const SizedBox(height: 8),
                   Center(
@@ -1211,8 +1395,8 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                       _recordsMessage!,
                       style: TextStyle(
                         color: _recordsMessage!.startsWith('Ошибка')
-                            ? Colors.red
-                            : Colors.green,
+                            ? Colors.redAccent
+                            : _palette.success,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1221,6 +1405,118 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsTab() {
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.palette_outlined, color: _palette.accent, size: 28),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Настройки темы',
+                      style: TextStyle(
+                        color: _palette.text,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Выберите цветовое оформление интерфейса:',
+                  style: TextStyle(
+                    color: _palette.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...AppThemeOption.values.map(_buildThemeOptionTile),
+                const SizedBox(height: 8),
+                Text(
+                  'Цвета дисков, грифа и замков не меняются при смене темы.',
+                  style: TextStyle(
+                    color: _palette.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOptionTile(AppThemeOption option) {
+    final p = paletteOf(option);
+    final bool selected = widget.selectedTheme == option;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: OutlinedButton(
+        onPressed: () => widget.onThemeChanged(option),
+        style: OutlinedButton.styleFrom(
+          backgroundColor:
+              selected ? _palette.accent.withOpacity(0.12) : _palette.surface,
+          side: BorderSide(
+            color: selected ? _palette.accent : _palette.outline,
+            width: selected ? 2 : 1,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: p.accent,
+                border: Border.all(color: p.outline),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.label,
+                    style: TextStyle(
+                      color: _palette.text,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    p.description,
+                    style: TextStyle(
+                      color: _palette.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected) Icon(Icons.check_circle, color: _palette.accent),
+          ],
         ),
       ),
     );
@@ -1235,12 +1531,15 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _palette.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF16213E),
-        title: const Text(
+        backgroundColor: _palette.appBar,
+        title: Text(
           'Калькулятор дисков штанги',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: _palette.text,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -1253,16 +1552,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
                 children: [
                   _buildCalculationTab(),
                   _buildRecordsTab(),
-                  const Center(
-                    child: Text(
-                      'Настройки',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  _buildSettingsTab(),
                 ],
               ),
             ),
@@ -1270,7 +1560,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Container(
-                  color: Colors.white,
+                  color: _palette.surface,
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1305,7 +1595,7 @@ class _BarbellCalculatorPageState extends State<BarbellCalculatorPage> {
 }
 
 class _BarbellVisual extends StatelessWidget {
-  final List<double> discs; // диски одной стороны (от центра к краю)
+  final List<double> discs;
   final bool includeLocks;
 
   const _BarbellVisual({required this.discs, required this.includeLocks});
@@ -1418,8 +1708,8 @@ class _BarbellBobyshka extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 24, // уже замка (у замка сейчас 28)
-      height: 76, // выше грифа/втулки, но ниже замка
+      width: 24,
+      height: 76,
       margin: const EdgeInsets.only(right: 1),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -1436,7 +1726,8 @@ class _BarbellBobyshka extends StatelessWidget {
 
 class _DiscLegend extends StatelessWidget {
   final List<double> discs;
-  const _DiscLegend({required this.discs});
+  final AppPalette palette;
+  const _DiscLegend({required this.discs, required this.palette});
 
   @override
   Widget build(BuildContext context) {
@@ -1448,7 +1739,7 @@ class _DiscLegend extends StatelessWidget {
     final sorted = counts.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Container(
-      color: Colors.white,
+      color: palette.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Wrap(
         spacing: 12,
